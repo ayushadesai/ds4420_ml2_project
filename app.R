@@ -202,10 +202,6 @@ ui <- navbarPage(
       mainPanel(width = 9,
         uiOutput("ghost_prob_card"),
         div(class = "plot-panel",
-          div(class = "section-title", "Ghost Rate by Borough (Training Data)"),
-          plotOutput("ghost_borough_plot", height = "210px")
-        ),
-        div(class = "plot-panel",
           div(class = "section-title", "95% Credible Intervals — Ghost Predictors"),
           plotOutput("ghost_coef_plot", height = "260px")
         )
@@ -318,33 +314,6 @@ server <- function(input, output, session) {
     )
   })
 
-  output$ghost_borough_plot <- renderPlot({
-    tryCatch({
-      df_ghost %>%
-        group_by(borough) %>%
-        summarise(avg_prob  = mean(ghost_prob),
-                  n_flagged = sum(ghost),
-                  .groups   = "drop") %>%
-        ggplot(aes(x = reorder(borough, avg_prob), y = avg_prob)) +
-        geom_col(fill = "#1a1a2e", alpha = 0.85, width = 0.6) +
-        geom_text(aes(label = paste0(n_flagged, " flagged")),
-                  hjust = -0.1, size = 3.3, color = "#444") +
-        coord_flip(clip = "off") +
-        scale_y_continuous(labels = scales::percent_format(accuracy = 1),
-                           expand = expansion(mult = c(0, 0.25))) +
-        labs(x = NULL, y = "Mean Posterior P(ghost)") +
-        theme_minimal(base_size = 11) +
-        theme(panel.grid.minor = element_blank(),
-              panel.grid.major.y = element_blank(),
-              panel.grid.major.x = element_line(color = "#eeeeee"),
-              axis.text.y = element_text(size = 11))
-    }, error = function(e) {
-      ggplot() + annotate("text", x = 0.5, y = 0.5,
-        label = paste("Plot unavailable:", conditionMessage(e)),
-        size = 4, color = "#c0392b") + theme_void()
-    })
-  }, res = 96)
-
   output$ghost_coef_plot <- renderPlot({
     tryCatch({
       as.data.frame(ghost_data$ci) %>%
@@ -427,4 +396,6 @@ server <- function(input, output, session) {
 
 }
 
+shinylive::export(appdir = ".", destdir = "docs")
 shinyApp(ui, server)
+
